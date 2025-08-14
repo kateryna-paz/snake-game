@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="styles.css" />
+    <script src="https://unpkg.com/feather-icons"></script>
+    <title>Гра "Змійка"</title>
+  </head>
+  <body>
+    <main id="game">
+      <!-- Заголовок -->
+      <header>
+        <h1>Гра "Змійка"</h1>
+
+        <div id="scoreBoard">
+          <h2>Рахунок: <span id="score">0</span></h2>
+        </div>
+      </header>
+
+      <!-- Поле для гри -->
+      <div id="gameArea"></div>
+
+      <!-- Кнопки мобільного керування -->
+      <section id="mobileControls" class="hidden">
+        <button class="btn btnMobile" id="upBtn">
+          <svg class="icon">
+            <use href="assets/dist/feather-sprite.svg#arrow-up" />
+          </svg>
+        </button>
+        <div class="sideButtons">
+          <button class="btn btnMobile" id="leftBtn">
+            <svg class="icon">
+              <use href="assets/dist/feather-sprite.svg#arrow-left" />
+            </svg>
+          </button>
+          <button class="btn btnMobile" id="rightBtn">
+            <svg class="icon">
+              <use href="assets/dist/feather-sprite.svg#arrow-right" />
+            </svg>
+          </button>
+        </div>
+        <button class="btn btnMobile" id="downBtn">
+          <svg class="icon">
+            <use href="assets/dist/feather-sprite.svg#arrow-down" />
+          </svg>
+        </button>
+      </section>
+
+      <!-- Кнопка запуску -->
+      <section id="controls">
+        <button class="btn btnControl btnLarge" id="playButton">
+          Нова Гра
+        </button>
+      </section>
+
+      <!-- Модальні вікна -->
+      <div class="hidden" id="darkBg"></div>
+
+      <div class="message hidden" id="sizeMessage">
+        <p>Оберіть розмір поля:</p>
+        <div>
+          <button class="btn btnPrimary" id="smallSize">20 x 20</button>
+          <button class="btn btnPrimary" id="mediumSize">30 x 30</button>
+        </div>
+      </div>
+
+      <div id="gameOver" class="message hidden">
+        <h2>Гра закінчена</h2>
+        <p>Ваш фінальний рахунок: <span id="finalScore">0</span></p>
+        <button class="btn btnPrimary" id="restartButton">
+          <svg class="icon">
+            <use href="assets/dist/feather-sprite.svg#rotate-cw" />
+          </svg>
+        </button>
+      </div>
+    </main>
+
+    <script src="main.js"></script>
+  </body>
+</html>
