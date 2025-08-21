@@ -1,127 +1,63 @@
-const speedMs = 300;
-const scorePerApple = 10;
-const flashEffectDuration = 300;
-let areaSize = 20;
-let score = 0;
-let gameStarted = false;
-let boxSize;
-let snake;
-let apple;
-let cells;
-let direction = "RIGHT";
-let gameInterval;
+const CONFIG = {
+  DEFAULT_AREA_SIZE: 20,
+  SPEED: 300,
+  SCORE_PER_APPLE: 10,
+  FLASH_DURATION: 300,
+  MOBILE_BREAKPOINT: 860,
+  DIRECTIONS: {
+    UP: { x: 0, y: -1, key: ["ArrowUp", "KeyW"] },
+    DOWN: { x: 0, y: 1, key: ["ArrowDown", "KeyS"] },
+    LEFT: { x: -1, y: 0, key: ["ArrowLeft", "KeyA"] },
+    RIGHT: { x: 1, y: 0, key: ["ArrowRight", "KeyD"] },
+  },
+  OPPOSITES: { UP: "DOWN", DOWN: "UP", LEFT: "RIGHT", RIGHT: "LEFT" },
+};
 
-const playButton = document.getElementById("playButton");
-const sizeMessage = document.getElementById("sizeMessage");
-const darkBg = document.getElementById("darkBg");
-const smallSizeBtn = document.getElementById("smallSize");
-const mediumSizeBtn = document.getElementById("mediumSize");
-const area = document.getElementById("gameArea");
-const scoreElem = document.getElementById("score");
-const finalScoreElem = document.getElementById("finalScore");
-const gameOverElem = document.getElementById("gameOver");
-const restartButton = document.getElementById("restartButton");
-const mobileControls = document.getElementById("mobileControls");
+let gameState = {
+  areaSize: CONFIG.DEFAULT_AREA_SIZE,
+  score: 0,
+  started: false,
+  direction: "RIGHT",
+  snake: [],
+  apple: {},
+  cells: null,
+  interval: null,
+};
 
-const upBtn = document.getElementById("upBtn");
-const downBtn = document.getElementById("downBtn");
-const leftBtn = document.getElementById("leftBtn");
-const rightBtn = document.getElementById("rightBtn");
+const DOM = {
+  playButton: document.getElementById("playButton"),
+  sizeForm: document.getElementById("sizeForm"),
+  sizeMessage: document.getElementById("sizeMessage"),
+  darkBg: document.getElementById("darkBg"),
+  area: document.getElementById("gameArea"),
+  scoreElem: document.getElementById("score"),
+  finalScoreElem: document.getElementById("finalScore"),
+  gameOverElem: document.getElementById("gameOver"),
+  restartButton: document.getElementById("restartButton"),
+  mobileControls: document.getElementById("mobileControls"),
+};
 
-/* Ініціалізація гри */
-function init() {
-  if (window.innerWidth <= 860) {
-    mobileControls.classList.remove("hidden");
-  }
-
-  setupEventListeners();
-}
-
-/* Налаштування обробників подій */
-function setupEventListeners() {
-  playButton.addEventListener("click", pressStart);
-  restartButton.addEventListener("click", pressStart);
-  darkBg.addEventListener("click", closeMessage);
-  smallSizeBtn.addEventListener("click", () => setGameAreaSize(20));
-  mediumSizeBtn.addEventListener("click", () => setGameAreaSize(30));
-
-  document.addEventListener("keydown", handleKeyPress);
-
-  upBtn.addEventListener("click", () => changeDirection("UP"));
-  downBtn.addEventListener("click", () => changeDirection("DOWN"));
-  leftBtn.addEventListener("click", () => changeDirection("LEFT"));
-  rightBtn.addEventListener("click", () => changeDirection("RIGHT"));
-}
-
-/* Функція для управління грою */
-function pressStart() {
-  closeMessage();
-  reset();
-  chooseSize();
-}
-
-/* Функція для вибору розміру поля */
-function chooseSize() {
-  darkBg.classList.remove("hidden");
-  sizeMessage.classList.remove("hidden");
-}
-
-/* Функція закриття модальних вікон */
-function closeMessage() {
-  darkBg.classList.add("hidden");
-  sizeMessage.classList.add("hidden");
-  gameOverElem.classList.add("hidden");
-}
-
-/* Функція створення ігрового поля */
-function setGameAreaSize(size) {
-  areaSize = size;
-
-  area.innerHTML = "";
-  area.style.gridTemplateRows = `repeat(${size}, 1fr)`;
-  area.style.gridTemplateColumns = `repeat(${size}, 1fr)`;
-
-  for (let i = 0; i < size * size; i++) {
-    const cell = document.createElement("div");
-    cell.classList.add("cell");
-    area.appendChild(cell);
-  }
-
-  cells = document.querySelectorAll(".cell");
-
-  let x = 0,
-    y = 0;
-  for (let i = 0; i < cells.length; i++) {
-    cells[i].setAttribute("x", x);
-    cells[i].setAttribute("y", y);
-    x++;
-    if (x >= size) {
-      x = 0;
-      y++;
-    }
-  }
-
-  startGame();
-}
-
-/* Функція для запуску гри */
-function startGame() {
-  closeMessage();
-  clearInterval(gameInterval);
-
-  gameStarted = true;
-
-  generateSnake();
-  generateApple();
-  gameInterval = setInterval(gameLoop, speedMs);
-  draw();
-  updateScore();
-}
+const utilsFunctions = {
+  getRandomItem: (array) => array[Math.floor(Math.random() * array.length)],
+  coordsToIndex: (x, y, size) => y * size + x,
+  indexToCoords: (index, size) => ({
+    x: index % size,
+    y: Math.floor(index / size),
+  }),
+  isInBounds: (pos, size) =>
+    pos.x >= 0 && pos.x < size && pos.y >= 0 && pos.y < size,
+  addClasses: (element, ...classes) => element.classList.add(...classes),
+  removeClasses: (element, ...classes) => element.classList.remove(...classes),
+  toggleClass: (element, className, condition) =>
+    element.classList.toggle(className, condition),
+  toggleModal: (show, ...elements) =>
+    elements.forEach((el) => el.classList[show ? "remove" : "add"]("hidden")),
+};
 
 /* Функція створення змійки у центрі поля */
 function generateSnake() {
-  const mid = Math.floor(areaSize / 2);
-  snake = [
+  const mid = Math.floor(gameState.areaSize / 2);
+  return [
     { x: mid + 1, y: mid },
     { x: mid, y: mid },
     { x: mid - 1, y: mid },
@@ -130,202 +66,265 @@ function generateSnake() {
 
 /* Функція створення яблука */
 function generateApple() {
-  if (!cells || cells.length === 0) return;
-
-  const emptyCells = Array.from(cells).filter(
+  const emptyCells = Array.from(gameState.cells).filter(
     (cell) =>
       !cell.classList.contains("snake") && !cell.classList.contains("snakeHead")
   );
 
   if (emptyCells.length === 0) return;
 
-  const randomCell = emptyCells[Math.floor(Math.random() * emptyCells.length)];
-  apple = {
+  const randomCell = utilsFunctions.getRandomItem(emptyCells);
+  return {
     x: parseInt(randomCell.getAttribute("x")),
     y: parseInt(randomCell.getAttribute("y")),
   };
 }
 
-/* Функція для перевірки зайнятості позиції */
-function isPositionOccupied(position) {
-  return snake.some(
-    (segment) => segment.x === position.x && segment.y === position.y
-  );
+/* Функція перевірки з'їденості яблука */
+function isAppleEaten(head) {
+  return head.x === gameState.apple.x && head.y === gameState.apple.y;
 }
 
-/* Функція перемалювання об'єктів на полі */
-function draw() {
-  if (!cells) return;
+/* Функція для створення нової голови змійки */
+function createNewHead(head) {
+  const dir = CONFIG.DIRECTIONS[gameState.direction];
+  return { x: head.x + dir.x, y: head.y + dir.y };
+}
 
-  cells.forEach((cell) => {
-    cell.classList.remove("snake", "snakeHead", "apple");
-  });
-
-  snake.forEach((segment, idx) => {
-    const index = segment.y * areaSize + segment.x;
-    if (index >= 0 && index < cells.length) {
-      if (idx === 0) {
-        cells[index].classList.add("snakeHead");
-      } else {
-        cells[index].classList.add("snake");
-      }
-    }
-  });
-
-  const appleCellIndex = apple.y * areaSize + apple.x;
-  const appleCell = cells[appleCellIndex];
-  if (appleCell) {
-    appleCell.classList.add("apple");
-  }
+/* Функція для перевірки зіткнень */
+function checkCollision(head) {
+  return (
+    !utilsFunctions.isInBounds(head, gameState.areaSize) ||
+    gameState.snake.some(
+      (segment) => segment.x === head.x && segment.y === head.y
+    )
+  );
 }
 
 /* Головний ігровий цикл */
 function gameLoop() {
-  if (!gameStarted) return;
+  if (!gameState.started) return;
 
-  const head = { ...snake[0] };
+  const newHead = createNewHead(gameState.snake[0]);
 
-  switch (direction) {
-    case "UP":
-      head.y -= 1;
-      break;
-    case "DOWN":
-      head.y += 1;
-      break;
-    case "LEFT":
-      head.x -= 1;
-      break;
-    case "RIGHT":
-      head.x += 1;
-      break;
-  }
-
-  if (
-    head.x < 0 ||
-    head.x >= areaSize ||
-    head.y < 0 ||
-    head.y >= areaSize ||
-    isPositionOccupied(head)
-  ) {
+  if (checkCollision(newHead)) {
     changeAreaBg("errorFlash");
     setTimeout(() => endGame(), 150);
     return;
   }
 
-  snake.unshift(head);
+  gameState.snake.unshift(newHead);
 
-  if (head.x === apple.x && head.y === apple.y) {
+  if (isAppleEaten(newHead)) {
     changeAreaBg("successFlash");
-    score += scorePerApple;
+    gameState.score += CONFIG.SCORE_PER_APPLE;
     updateScore();
-    generateApple();
+    gameState.apple = generateApple();
   } else {
-    snake.pop();
+    gameState.snake.pop();
   }
 
   draw();
 }
 
-/* Функція оновлення рахунку на сторінці */
-function updateScore() {
-  scoreElem.textContent = score;
-  scoreElem.classList.add("update");
-  setTimeout(() => {
-    scoreElem.classList.remove("update");
-  }, 200);
-}
-
-/* Функція завершення гри */
-function endGame() {
-  gameStarted = false;
-  clearInterval(gameInterval);
-
-  finalScoreElem.textContent = score;
-
-  darkBg.classList.remove("hidden");
-  gameOverElem.classList.remove("hidden");
-}
-
-/* Функція скидання гри */
-function reset() {
-  areaSize = 20;
-  score = 0;
-  gameStarted = false;
-  boxSize = 0;
-  snake = [];
-  apple = {};
-  cells = null;
-  direction = "RIGHT";
-  clearInterval(gameInterval);
-}
-
-/* Функція обробки натискання клавіш */
-function handleKeyPress(event) {
-  if (!gameStarted) return;
-
-  switch (event.key) {
-    case "ArrowUp":
-    case "Left":
-    case "KeyW":
-      event.preventDefault();
-      changeDirection("UP");
-      break;
-    case "ArrowDown":
-    case "Down":
-    case "KeyS":
-      event.preventDefault();
-      changeDirection("DOWN");
-      break;
-    case "ArrowLeft":
-    case "Left":
-    case "KeyA":
-      event.preventDefault();
-      changeDirection("LEFT");
-      break;
-    case "ArrowRight":
-    case "Right":
-    case "KeyD":
-      event.preventDefault();
-      changeDirection("RIGHT");
-      break;
-  }
-}
-
 /* Функція зміни напрямку руху змійки */
 function changeDirection(newDirection) {
-  if (!gameStarted) return;
-
-  const opposites = {
-    UP: "DOWN",
-    DOWN: "UP",
-    LEFT: "RIGHT",
-    RIGHT: "LEFT",
-  };
-
-  if (opposites[direction] !== newDirection) {
-    direction = newDirection;
+  if (CONFIG.OPPOSITES[gameState.direction] !== newDirection) {
+    gameState.direction = newDirection;
   } else {
     changeAreaBg("errorFlash");
   }
 }
 
+/* Функція створення ігрового поля */
+function buildGameArea(size) {
+  DOM.area.innerHTML = "";
+  DOM.area.style.cssText = `
+      grid-template-rows: repeat(${size}, 1fr);
+      grid-template-columns: repeat(${size}, 1fr);
+    `;
+
+  const fragment = document.createDocumentFragment();
+
+  for (let i = 0; i < size * size; i++) {
+    const cell = document.createElement("div");
+    const coords = utilsFunctions.indexToCoords(i, size);
+
+    cell.setAttribute("x", coords.x);
+    cell.setAttribute("y", coords.y);
+
+    cell.classList.add("cell");
+
+    fragment.appendChild(cell);
+  }
+
+  DOM.area.appendChild(fragment);
+  gameState.cells = document.querySelectorAll(".cell");
+}
+
+/* Функція перемалювання об'єктів на полі */
+function draw() {
+  if (!gameState.cells) return;
+
+  gameState.cells.forEach((cell) => {
+    utilsFunctions.removeClasses(cell, "snake", "snakeHead", "apple");
+  });
+
+  gameState.snake.forEach((segment, idx) => {
+    const index = utilsFunctions.coordsToIndex(
+      segment.x,
+      segment.y,
+      gameState.areaSize
+    );
+    if (gameState.cells[index]) {
+      utilsFunctions.addClasses(
+        gameState.cells[index],
+        idx === 0 ? "snakeHead" : "snake"
+      );
+    }
+  });
+
+  if (gameState.apple) {
+    const appleIndex = utilsFunctions.coordsToIndex(
+      gameState.apple.x,
+      gameState.apple.y,
+      gameState.areaSize
+    );
+    if (gameState.cells[appleIndex]) {
+      utilsFunctions.addClasses(gameState.cells[appleIndex], "apple");
+    }
+  }
+}
+
+/* Функція оновлення рахунку на сторінці */
+function updateScore() {
+  DOM.scoreElem.textContent = gameState.score;
+  utilsFunctions.addClasses(DOM.scoreElem, "update");
+  setTimeout(() => utilsFunctions.removeClasses(DOM.scoreElem, "update"), 200);
+}
+
 /* Функція зміни фону ігрової області */
 function changeAreaBg(type) {
-  area.classList.add(type);
+  utilsFunctions.addClasses(DOM.area, type);
 
   setTimeout(() => {
-    area.classList.remove(type);
-  }, flashEffectDuration);
+    utilsFunctions.removeClasses(DOM.area, type);
+  }, CONFIG.FLASH_DURATION);
 }
+
+/* Функції для відображення модальних вікон */
+const showSizeDialog = () =>
+  utilsFunctions.toggleModal(true, DOM.darkBg, DOM.sizeMessage);
+const showGameOverDialog = () =>
+  utilsFunctions.toggleModal(true, DOM.darkBg, DOM.gameOverElem);
+const hideModals = () =>
+  utilsFunctions.toggleModal(
+    false,
+    DOM.darkBg,
+    DOM.sizeMessage,
+    DOM.gameOverElem
+  );
+
+/* Функція оновлення кнопок мобільного керування  */
+const updateMobileControls = () =>
+  utilsFunctions.toggleClass(
+    DOM.mobileControls,
+    "hidden",
+    window.innerWidth > CONFIG.MOBILE_BREAKPOINT
+  );
+
+/* Функція для управління грою */
+function pressStart() {
+  hideModals();
+  reset();
+  showSizeDialog();
+}
+
+/* Функція для запуску гри */
+function startGame() {
+  hideModals();
+  clearInterval(gameState.interval);
+
+  gameState.started = true;
+  gameState.snake = generateSnake();
+  gameState.apple = generateApple();
+  gameState.interval = setInterval(gameLoop, CONFIG.SPEED);
+
+  draw();
+  updateScore();
+}
+
+/* Функція завершення гри */
+function endGame() {
+  gameState.started = false;
+  clearInterval(gameState.interval);
+  DOM.finalScoreElem.textContent = gameState.score;
+  showGameOverDialog();
+}
+
+/* Функція скидання гри */
+function reset() {
+  Object.assign(gameState, {
+    size: 20,
+    score: 0,
+    started: false,
+    direction: "RIGHT",
+    snake: [],
+    apple: {},
+    cells: null,
+  });
+  clearInterval(gameState.interval);
+}
+
+/* Функція вибору розміру поля */
+function selectSize(e) {
+  e.preventDefault();
+  const selectedSize = document.querySelector('input[name="gridSize"]:checked');
+  if (selectedSize) {
+    gameState.areaSize = parseInt(selectedSize.value);
+    buildGameArea(gameState.areaSize);
+    startGame();
+  }
+}
+
+/* Функція обробки натискання клавіш */
+function handleKeyPress(e) {
+  if (!gameState.started) return;
+
+  const direction = Object.entries(CONFIG.DIRECTIONS).find(([_, dir]) =>
+    dir.key.includes(e.code)
+  )?.[0];
+
+  if (direction) {
+    e.preventDefault();
+    changeDirection(direction);
+  }
+}
+
+/* Налаштування обробників подій */
+function setupEventListeners() {
+  DOM.playButton.addEventListener("click", pressStart);
+  DOM.restartButton.addEventListener("click", pressStart);
+  DOM.sizeForm.addEventListener("submit", selectSize);
+  DOM.darkBg.addEventListener("click", hideModals);
+
+  document.addEventListener("keydown", handleKeyPress);
+
+  ["upBtn", "downBtn", "leftBtn", "rightBtn"].forEach((btnId) => {
+    const direction = btnId.replace("Btn", "").toUpperCase();
+    document
+      .getElementById(btnId)
+      ?.addEventListener("click", () => changeDirection(direction));
+  });
+
+  window.addEventListener("resize", updateMobileControls);
+}
+
+/* Ініціалізація гри */
+const init = () => {
+  updateMobileControls();
+  setupEventListeners();
+};
 
 /* Ініціалізація при завантаженні сторінки */
 window.addEventListener("load", init);
-
-/* Керування елементом mobileControls при зміні розміру вікна */
-window.addEventListener("resize", () => {
-  if (window.innerWidth <= 860) {
-    mobileControls.classList.remove("hidden");
-  } else {
-    mobileControls.classList.add("hidden");
-  }
-});

@@ -58,11 +58,19 @@
       <div class="hidden" id="darkBg"></div>
 
       <div class="message hidden" id="sizeMessage">
-        <p>Оберіть розмір поля:</p>
-        <div>
-          <button class="btn btnPrimary" id="smallSize">20 x 20</button>
-          <button class="btn btnPrimary" id="mediumSize">30 x 30</button>
-        </div>
+        <form id="sizeForm">
+          <p>Оберіть розмір поля:</p>
+          <div>
+            <input type="radio" id="smallSize" name="gridSize" value="20" />
+            <label for="smallSize">20 x 20</label>
+          </div>
+          <div>
+            <input type="radio" id="mediumSize" name="gridSize" value="30" />
+            <label for="mediumSize">30 x 30</label>
+          </div>
+
+          <button type="submit" class="btn btnPrimary">Почати</button>
+        </form>
       </div>
 
       <div id="gameOver" class="message hidden">

@@ -182,7 +182,7 @@ h2 {
   transform: translate(-50%, -50%);
   background-color: rgb(22, 17, 37);
   border: 2px solid rgb(182, 175, 199);
-  padding: 20px 30px;
+  padding: 15px 30px;
   border-radius: 20px;
   display: flex;
   flex-direction: column;
@@ -204,6 +204,47 @@ h2 {
     transform: translate(-50%, -50%) scale(1);
     opacity: 1;
   }
+}
+
+#sizeForm > div {
+  margin: 5px 0 15px 0;
+}
+
+#sizeForm input[type="radio"] {
+  display: none;
+  accent-color: #e0b45d;
+  cursor: pointer;
+}
+#sizeForm label {
+  margin-left: 8px;
+  display: inline-block;
+  background-color: rgb(59, 119, 75);
+  color: #fff;
+  border: 2px solid rgba(68, 139, 82, 0.6);
+  border-radius: 12px;
+  padding: 12px 30px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  min-width: 120px;
+  text-align: center;
+  box-shadow: 0 4px 15px rgba(25, 110, 48, 0.2);
+}
+
+#sizeForm label:hover {
+  background-color: rgb(38, 78, 49);
+  border-color: rgba(68, 139, 82, 1);
+}
+#sizeForm input[type="radio"]:checked + label {
+  background-color: rgb(25, 80, 42);
+  border-color: rgb(47, 95, 57);
+  box-shadow: 0 0px 20px rgba(96, 188, 121, 0.3);
+  transform: scale(1.04);
+}
+
+#sizeForm > button {
+  margin: 10px 0;
 }
 
 .btn {
@@ -244,6 +285,7 @@ h2 {
   padding: 24px;
   margin: 0 4px;
   font-size: 22px;
+  line-height: 0.4;
   font-weight: 500;
   box-shadow: 0 5px 15px rgba(15, 96, 97, 0.3);
 }
