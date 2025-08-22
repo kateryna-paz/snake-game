@@ -1,58 +1,7 @@
-const CONFIG = {
-  DEFAULT_AREA_SIZE: 20,
-  SPEED: 300,
-  SCORE_PER_APPLE: 10,
-  FLASH_DURATION: 300,
-  MOBILE_BREAKPOINT: 860,
-  DIRECTIONS: {
-    UP: { x: 0, y: -1, key: ["ArrowUp", "KeyW"] },
-    DOWN: { x: 0, y: 1, key: ["ArrowDown", "KeyS"] },
-    LEFT: { x: -1, y: 0, key: ["ArrowLeft", "KeyA"] },
-    RIGHT: { x: 1, y: 0, key: ["ArrowRight", "KeyD"] },
-  },
-  OPPOSITES: { UP: "DOWN", DOWN: "UP", LEFT: "RIGHT", RIGHT: "LEFT" },
-};
-
-let gameState = {
-  areaSize: CONFIG.DEFAULT_AREA_SIZE,
-  score: 0,
-  started: false,
-  direction: "RIGHT",
-  snake: [],
-  apple: {},
-  cells: null,
-  interval: null,
-};
-
-const DOM = {
-  playButton: document.getElementById("playButton"),
-  sizeForm: document.getElementById("sizeForm"),
-  sizeMessage: document.getElementById("sizeMessage"),
-  darkBg: document.getElementById("darkBg"),
-  area: document.getElementById("gameArea"),
-  scoreElem: document.getElementById("score"),
-  finalScoreElem: document.getElementById("finalScore"),
-  gameOverElem: document.getElementById("gameOver"),
-  restartButton: document.getElementById("restartButton"),
-  mobileControls: document.getElementById("mobileControls"),
-};
-
-const utilsFunctions = {
-  getRandomItem: (array) => array[Math.floor(Math.random() * array.length)],
-  coordsToIndex: (x, y, size) => y * size + x,
-  indexToCoords: (index, size) => ({
-    x: index % size,
-    y: Math.floor(index / size),
-  }),
-  isInBounds: (pos, size) =>
-    pos.x >= 0 && pos.x < size && pos.y >= 0 && pos.y < size,
-  addClasses: (element, ...classes) => element.classList.add(...classes),
-  removeClasses: (element, ...classes) => element.classList.remove(...classes),
-  toggleClass: (element, className, condition) =>
-    element.classList.toggle(className, condition),
-  toggleModal: (show, ...elements) =>
-    elements.forEach((el) => el.classList[show ? "remove" : "add"]("hidden")),
-};
+import CONFIG from "./config.js";
+import gameState from "./state.js";
+import DOM from "./dom-elements.js";
+import { utilsFunctions } from "./utils.js";
 
 /* Функція створення змійки у центрі поля */
 function generateSnake() {
